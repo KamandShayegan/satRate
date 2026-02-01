@@ -1,5 +1,6 @@
 <script setup>
-import { reactive, computed, ref, watch } from 'vue'
+import { reactive, computed, ref, watch, nextTick } from 'vue'
+import confetti from 'canvas-confetti'
 import SmileyRating from './components/SmileyRating.vue'
 import YesNo from './components/YesNo.vue'
 import LengthChoice from './components/LengthChoice.vue'
@@ -108,6 +109,7 @@ async function submit() {
       return
     }
     submitted.value = true
+    nextTick(() => fireConfetti())
   } catch (e) {
     submitError.value = 'Could not send. Check your connection and try again.'
   }
@@ -133,7 +135,34 @@ const initialForm = {
   suggestions: '',
 }
 
+function fireConfetti() {
+  const colors = ['#e07c5c', '#9b8fb5', '#81b29a', '#7eb8da']
+  confetti({
+    particleCount: 80,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors,
+  })
+  setTimeout(() => {
+    confetti({
+      particleCount: 50,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors,
+    })
+    confetti({
+      particleCount: 50,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors,
+    })
+  }, 150)
+}
+
 function startOver() {
+  fireConfetti()
   Object.assign(form, initialForm)
   submitted.value = false
 }

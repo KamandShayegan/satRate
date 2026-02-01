@@ -11,45 +11,40 @@ const loading = ref(false)
 const error = ref('')
 const chartInstances = ref([])
 
-const QUESTION_LABELS = {
-  onboardingSmooth: 'How smooth was the onboarding process?',
-  onboardingLength: 'Was the length appropriate?',
-  docEffective: 'How effective was the documentation?',
-  docUseLater: 'How likely to use documentation later?',
-  docClear: 'How clear was the documentation?',
-  docComplete: 'Was the documentation complete?',
-  docReferToOthers: 'How likely to refer others to the doc?',
-  docEasyIntuitive: 'How easy and intuitive was the documentation?',
-  usabilityReflected: 'How well did it reflect what you needed to know?',
-  usabilityCommunication: 'How effective was the communication?',
-  usabilityTailored: 'How effective was the information for your role?',
-  supportFeltSupported: 'Did you feel supported?',
-  supportResponsive: 'How responsive was support?',
-  supportHadResources: 'Did you get the resources you needed?',
-  supportSolvedIssues: 'Did support help you solve your issues?',
-}
-
-const RATING_KEYS = [
-  'onboardingSmooth',
-  'docEffective', 'docUseLater', 'docClear', 'docComplete', 'docReferToOthers', 'docEasyIntuitive',
-  'usabilityReflected', 'usabilityCommunication', 'usabilityTailored',
-  'supportFeltSupported', 'supportResponsive', 'supportHadResources', 'supportSolvedIssues',
+// One pie per category: aggregate all 1–5 ratings in that category
+const CATEGORIES = [
+  { id: 'onboarding', label: '1. Onboarding', keys: ['onboardingSmooth'] },
+  { id: 'documentation', label: '2. Documentation', keys: ['docEffective', 'docUseLater', 'docClear', 'docComplete', 'docReferToOthers', 'docEasyIntuitive'] },
+  { id: 'usability', label: '3. Usability & ease of use', keys: ['usabilityReflected', 'usabilityCommunication', 'usabilityTailored'] },
+  { id: 'support', label: '4. Overall support', keys: ['supportFeltSupported', 'supportResponsive', 'supportHadResources', 'supportSolvedIssues'] },
 ]
-const LENGTH_KEYS = ['onboardingLength']
-const LENGTH_LABELS = { short: 'Too short', appropriate: 'Just right', long: 'Too long' }
 
-const ALL_KEYS = [...RATING_KEYS, ...LENGTH_KEYS]
+// Same order as survey: 😊 (best) → 😞 (worst), i.e. 5 → 1
+const EMOJI_LABELS = ['😊', '🙂', '😐', '😕', '😞']
 
-function keyHasData(results, key) {
-  if (!results) return false
-  const dist = LENGTH_KEYS.includes(key) ? (results.length?.[key] || {}) : (results.rating?.[key] || {})
-  const values = LENGTH_KEYS.includes(key) ? Object.values(dist) : [dist[1], dist[2], dist[3], dist[4], dist[5]].map(v => v || 0)
-  return values.some(v => v > 0)
+function aggregateCategoryDist(rating, keys) {
+  const dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  for (const k of keys) {
+    const d = rating?.[k] || {}
+    for (let i = 1; i <= 5; i++) dist[i] = (dist[i] || 0) + (d[i] || 0)
+  }
+  return dist
 }
 
-const keysWithData = computed(() => {
+function categoryHasData(dist) {
+  return [1, 2, 3, 4, 5].some(i => (dist[i] || 0) > 0)
+}
+
+const categoriesWithData = computed(() => {
   if (!results.value || !(results.value.totalResponses > 0)) return []
-  return ALL_KEYS.filter(k => keyHasData(results.value, k))
+  const rating = results.value.rating || {}
+  return CATEGORIES.filter(cat => {
+    const dist = aggregateCategoryDist(rating, cat.keys)
+    return categoryHasData(dist)
+  }).map(cat => ({
+    ...cat,
+    dist: aggregateCategoryDist(rating, cat.keys),
+  }))
 })
 
 const PIE_COLORS = [
@@ -80,14 +75,10 @@ async function fetchResults() {
   }
 }
 
-function makeChart(canvas, dist, isLength = false) {
+function makeChart(canvas, dist) {
   const ctx = canvas.getContext('2d')
-  const labels = isLength
-    ? Object.keys(dist).map(k => LENGTH_LABELS[k] || k)
-    : ['1', '2', '3', '4', '5']
-  const values = isLength
-    ? Object.values(dist)
-    : [dist[1] || 0, dist[2] || 0, dist[3] || 0, dist[4] || 0, dist[5] || 0]
+  const labels = EMOJI_LABELS
+  const values = [dist[5] || 0, dist[4] || 0, dist[3] || 0, dist[2] || 0, dist[1] || 0] // 😊→5, 😞→1
   const total = values.reduce((a, b) => a + b, 0)
   if (total === 0) return null
   return new Chart(ctx, {
@@ -117,16 +108,13 @@ function renderCharts() {
   if (!results.value || !props.open || !resultsRoot.value) return
   chartInstances.value.forEach(c => c?.destroy())
   chartInstances.value = []
-  const rating = results.value.rating || {}
-  const length = results.value.length || {}
   const containers = resultsRoot.value.querySelectorAll('[data-results-chart]')
-  const keys = keysWithData.value
+  const categories = categoriesWithData.value
   let idx = 0
-  for (const key of keys) {
+  for (const cat of categories) {
     const canvas = containers[idx]?.querySelector('canvas')
     if (!canvas) break
-    const dist = LENGTH_KEYS.includes(key) ? (length[key] || {}) : (rating[key] || {})
-    const chart = makeChart(canvas, dist, LENGTH_KEYS.includes(key))
+    const chart = makeChart(canvas, cat.dist)
     if (chart) chartInstances.value.push(chart)
     idx++
   }
@@ -166,12 +154,12 @@ onUnmounted(() => {
       <p class="results-total">{{ results.totalResponses }} response{{ results.totalResponses !== 1 ? 's' : '' }} recorded.</p>
       <div class="results-charts">
         <div
-          v-for="key in keysWithData"
-          :key="key"
+          v-for="cat in categoriesWithData"
+          :key="cat.id"
           class="chart-card card"
           data-results-chart
         >
-          <h3 class="chart-title">{{ QUESTION_LABELS[key] || key }}</h3>
+          <h3 class="chart-title">{{ cat.label }}</h3>
           <div class="chart-wrap">
             <canvas />
           </div>
