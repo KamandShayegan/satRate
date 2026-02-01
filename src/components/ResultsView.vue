@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import Chart from 'chart.js/auto'
 
 const props = defineProps({
@@ -37,6 +37,20 @@ const RATING_KEYS = [
 ]
 const LENGTH_KEYS = ['onboardingLength']
 const LENGTH_LABELS = { short: 'Too short', appropriate: 'Just right', long: 'Too long' }
+
+const ALL_KEYS = [...RATING_KEYS, ...LENGTH_KEYS]
+
+function keyHasData(results, key) {
+  if (!results) return false
+  const dist = LENGTH_KEYS.includes(key) ? (results.length?.[key] || {}) : (results.rating?.[key] || {})
+  const values = LENGTH_KEYS.includes(key) ? Object.values(dist) : [dist[1], dist[2], dist[3], dist[4], dist[5]].map(v => v || 0)
+  return values.some(v => v > 0)
+}
+
+const keysWithData = computed(() => {
+  if (!results.value || !(results.value.totalResponses > 0)) return []
+  return ALL_KEYS.filter(k => keyHasData(results.value, k))
+})
 
 const PIE_COLORS = [
   'rgba(224, 124, 92, 0.8)',   // coral
@@ -106,8 +120,9 @@ function renderCharts() {
   const rating = results.value.rating || {}
   const length = results.value.length || {}
   const containers = resultsRoot.value.querySelectorAll('[data-results-chart]')
+  const keys = keysWithData.value
   let idx = 0
-  for (const key of [...RATING_KEYS, ...LENGTH_KEYS]) {
+  for (const key of keys) {
     const canvas = containers[idx]?.querySelector('canvas')
     if (!canvas) break
     const dist = LENGTH_KEYS.includes(key) ? (length[key] || {}) : (rating[key] || {})
@@ -144,14 +159,14 @@ onUnmounted(() => {
 
     <div v-if="loading" class="results-loading">Loading results…</div>
     <div v-else-if="error" class="results-error">{{ error }}</div>
-    <div v-else-if="results && results.totalResponses === 0" class="results-empty">
-      No responses yet. Submit the survey to see results here.
+    <div v-else-if="results && !(results.totalResponses > 0)" class="results-empty">
+      No results yet.
     </div>
-    <div v-else-if="results" class="results-content">
+    <div v-else-if="results && results.totalResponses > 0" class="results-content">
       <p class="results-total">{{ results.totalResponses }} response{{ results.totalResponses !== 1 ? 's' : '' }} recorded.</p>
       <div class="results-charts">
         <div
-          v-for="key in [...RATING_KEYS, ...LENGTH_KEYS]"
+          v-for="key in keysWithData"
           :key="key"
           class="chart-card card"
           data-results-chart

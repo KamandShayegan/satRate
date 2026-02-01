@@ -142,17 +142,7 @@ function startOver() {
 <template>
   <div class="app">
     <header class="header">
-      <div class="header-top">
-        <h1>satRate</h1>
-        <button
-          v-if="!resultsOpen"
-          type="button"
-          class="results-btn"
-          @click="resultsOpen = true"
-        >
-          Results
-        </button>
-      </div>
+      <h1>satRate</h1>
       <p class="subtitle">Kamand’s personal knowledge transfer satisfaction survey</p>
     </header>
 
@@ -283,6 +273,17 @@ function startOver() {
       <p v-if="submitError" class="submit-error">{{ submitError }}</p>
       <button type="submit" class="submit-btn" :class="{ 'submit-btn--disabled': !isFormComplete }">Submit feedback</button>
     </form>
+
+    <div class="results-footer">
+      <button
+        v-if="!resultsOpen"
+        type="button"
+        class="results-btn"
+        @click="resultsOpen = true"
+      >
+        Previously submitted results
+      </button>
+    </div>
     </div>
   </div>
 </template>
@@ -297,16 +298,19 @@ function startOver() {
   margin-bottom: 1.5rem;
 }
 
-.header-top {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+.header {
+  text-align: center;
 }
 
 .header .subtitle {
+  margin-bottom: 0.75rem;
+}
+
+.results-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
   text-align: center;
+  border-top: 1px solid #e8e4e0;
 }
 
 .header h1 {
@@ -319,21 +323,26 @@ function startOver() {
 }
 
 .results-btn {
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--lavender-soft);
-  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(155, 143, 181, 0.4);
+  background: linear-gradient(135deg, rgba(224, 124, 92, 0.12) 0%, rgba(155, 143, 181, 0.12) 100%);
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform var(--transition), border-color var(--transition-fast), background var(--transition-fast);
+  box-shadow: 0 1px 4px rgba(45, 42, 38, 0.06);
+  transition: transform var(--transition), border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .results-btn:hover {
-  border-color: var(--lavender);
-  background: linear-gradient(135deg, #faf5fc 0%, #f5f0fa 100%);
-  transform: scale(1.03);
+  border-color: var(--lavender-soft);
+  background: linear-gradient(135deg, rgba(224, 124, 92, 0.2) 0%, rgba(155, 143, 181, 0.2) 100%);
+  box-shadow: 0 2px 6px rgba(45, 42, 38, 0.08);
+  transform: scale(1.05);
 }
 
 .close-results-btn {
