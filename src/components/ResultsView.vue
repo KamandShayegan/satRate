@@ -22,6 +22,14 @@ const CATEGORIES = [
 // Same order as survey: 😊 (best) → 😞 (worst), i.e. 5 → 1
 const EMOJI_LABELS = ['😊', '🙂', '😐', '😕', '😞']
 
+const PIE_COLORS = [
+  'rgba(224, 124, 92, 0.8)',
+  'rgba(155, 143, 181, 0.8)',
+  'rgba(129, 178, 154, 0.8)',
+  'rgba(126, 184, 218, 0.8)',
+  'rgba(168, 213, 186, 0.8)',
+]
+
 function aggregateCategoryDist(rating, keys) {
   const dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
   for (const k of keys) {
@@ -47,14 +55,6 @@ const categoriesWithData = computed(() => {
   }))
 })
 
-const PIE_COLORS = [
-  'rgba(224, 124, 92, 0.8)',   // coral
-  'rgba(155, 143, 181, 0.8)',   // lavender
-  'rgba(129, 178, 154, 0.8)',   // mint
-  'rgba(126, 184, 218, 0.8)',   // sky
-  'rgba(168, 213, 186, 0.8)',   // mint-soft
-]
-
 async function fetchResults() {
   loading.value = true
   error.value = ''
@@ -78,7 +78,7 @@ async function fetchResults() {
 function makeChart(canvas, dist) {
   const ctx = canvas.getContext('2d')
   const labels = EMOJI_LABELS
-  const values = [dist[5] || 0, dist[4] || 0, dist[3] || 0, dist[2] || 0, dist[1] || 0] // 😊→5, 😞→1
+  const values = [dist[5] || 0, dist[4] || 0, dist[3] || 0, dist[2] || 0, dist[1] || 0]
   const total = values.reduce((a, b) => a + b, 0)
   if (total === 0) return null
   return new Chart(ctx, {
