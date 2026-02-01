@@ -1,6 +1,6 @@
 # satRate
 
-Kamand’s personal knowledge transfer satisfaction survey — anonymous feedback from onboarded employees.
+Kamand’s personal knowledge transfer satisfaction survey — anonymous feedback
 
 ## Run locally
 
