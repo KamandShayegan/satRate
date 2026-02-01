@@ -1,11 +1,11 @@
 # Cloudflare Pages: build output and KV binding for satRate
-# See README for creating the KV namespace and deploying.
+# Bindings for this project are managed here (wrangler.toml), not in the dashboard UI.
 
 name = "satrate"
 pages_build_output_dir = "dist"
 
-# After creating a KV namespace in the dashboard (Workers & Pages > KV > Create namespace),
-# add its id below and uncomment. Or add the binding in Pages project Settings > Functions > KV.
-# [[kv_namespaces]]
-# binding = "SATRATE_KV"
-# id = "YOUR_KV_NAMESPACE_ID"
+# 1. Create a KV namespace in the dashboard: Workers & Pages > KV > Create namespace (e.g. "satrate-submissions")
+# 2. Copy the Namespace ID and replace YOUR_KV_NAMESPACE_ID below
+[[kv_namespaces]]
+binding = "SATRATE_KV"
+id = "62927b669d194420b21bea2c656a549d"
