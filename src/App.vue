@@ -3,6 +3,7 @@ import { reactive, computed, ref, watch } from 'vue'
 import SmileyRating from './components/SmileyRating.vue'
 import YesNo from './components/YesNo.vue'
 import LengthChoice from './components/LengthChoice.vue'
+import ResultsView from './components/ResultsView.vue'
 
 const form = reactive({
   // 1. Onboarding
@@ -31,6 +32,7 @@ const form = reactive({
 const submitted = ref(false)
 const showMandatoryMessage = ref(false)
 const submitError = ref('')
+const resultsOpen = ref(false)
 
 const requiredRatingKeys = [
   'onboardingSmooth',
@@ -140,10 +142,27 @@ function startOver() {
 <template>
   <div class="app">
     <header class="header">
-      <h1>satRate</h1>
+      <div class="header-top">
+        <h1>satRate</h1>
+        <button
+          v-if="!resultsOpen"
+          type="button"
+          class="results-btn"
+          @click="resultsOpen = true"
+        >
+          Results
+        </button>
+      </div>
       <p class="subtitle">Kamand’s personal knowledge transfer satisfaction survey</p>
     </header>
 
+    <ResultsView :open="resultsOpen">
+      <template #close>
+        <button type="button" class="close-results-btn" @click="resultsOpen = false">Close</button>
+      </template>
+    </ResultsView>
+
+    <div v-if="!resultsOpen">
     <div class="anonymous-banner card" v-if="!submitted">
       <strong>Anonymous feedback</strong> — Your answers are anonymous. No one will see individual responses; only aggregated results are used to improve onboarding.
     </div>
@@ -264,6 +283,7 @@ function startOver() {
       <p v-if="submitError" class="submit-error">{{ submitError }}</p>
       <button type="submit" class="submit-btn" :class="{ 'submit-btn--disabled': !isFormComplete }">Submit feedback</button>
     </form>
+    </div>
   </div>
 </template>
 
@@ -274,16 +294,63 @@ function startOver() {
 }
 
 .header {
-  text-align: center;
   margin-bottom: 1.5rem;
 }
 
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header .subtitle {
+  text-align: center;
+}
+
 .header h1 {
+  margin: 0;
   background: linear-gradient(135deg, var(--coral) 0%, var(--lavender) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-size: 2rem;
+}
+
+.results-btn {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--lavender-soft);
+  background: #fff;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.results-btn:hover {
+  border-color: var(--lavender);
+  background: linear-gradient(135deg, #faf5fc 0%, #f5f0fa 100%);
+  transform: scale(1.03);
+}
+
+.close-results-btn {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: linear-gradient(135deg, var(--coral) 0%, var(--lavender) 100%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.close-results-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(155, 143, 181, 0.35);
 }
 
 .guide-banner,
